@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  rdk7-builder:
+    build:
+      context: .
+      args:
+        USER_ID: ${USER_ID:-1000}
+        GROUP_ID: ${GROUP_ID:-1000}
+        USERNAME: ${USERNAME:-rdk}
+    image: rdk7-builder:latest
+    container_name: rdk7-builder
+    working_dir: /workspace
+    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
+    volumes:
+      - .:/workspace
+      - ~/.ssh:/home/rdk/.ssh:ro
+      - ~/.gitconfig:/home/rdk/.gitconfig:ro
+      - ~/.netrc:/home/rdk/.netrc:ro
+    environment:
+      - LANG=en_US.UTF-8
+      - LC_ALL=en_US.UTF-8
+      - LANGUAGE=en_US.UTF-8
+      - MACHINE=${MACHINE:-raspberrypi4-64-rdk-android-hybrid}
+      - DISTRO=${DISTRO:-rdk-generic-hybrid}
+    stdin_open: true
+    tty: true
+    profiles:
+      - interactive
+
+  rdk7-setup:
+    build:
+      context: .
+      args:
+        USER_ID: ${USER_ID:-1000}
+        GROUP_ID: ${GROUP_ID:-1000}
+        USERNAME: ${USERNAME:-rdk}
+    image: rdk7-builder:latest
+    container_name: rdk7-setup
+    working_dir: /workspace
+    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
+    volumes:
+      - .:/workspace
+      - ~/.ssh:/home/rdk/.ssh:ro
+      - ~/.gitconfig:/home/rdk/.gitconfig:ro
+      - ~/.netrc:/home/rdk/.netrc:ro
+    command: setup
+    profiles:
+      - setup
+
+  rdk7-build:
+    build:
+      context: .
+      args:
+        USER_ID: ${USER_ID:-1000}
+        GROUP_ID: ${GROUP_ID:-1000}
+        USERNAME: ${USERNAME:-rdk}
+    image: rdk7-builder:latest
+    container_name: rdk7-build
+    working_dir: /workspace
+    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
+    volumes:
+      - .:/workspace
+      - ~/.ssh:/home/rdk/.ssh:ro
+      - ~/.gitconfig:/home/rdk/.gitconfig:ro
+      - ~/.netrc:/home/rdk/.netrc:ro
+    environment:
+      - LANG=en_US.UTF-8
+      - LC_ALL=en_US.UTF-8
+      - LANGUAGE=en_US.UTF-8
+      - MACHINE=${MACHINE:-raspberrypi4-64-rdk-android-hybrid}
+      - DISTRO=${DISTRO:-rdk-generic-hybrid}
+    command: build
+    profiles:
+      - build
+
+  rdk7-shell:
+    build:
+      context: .
+      args:
+        USER_ID: ${USER_ID:-1000}
+        GROUP_ID: ${GROUP_ID:-1000}
+        USERNAME: ${USERNAME:-rdk}
+    image: rdk7-builder:latest
+    container_name: rdk7-shell
+    working_dir: /workspace
+    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
+    volumes:
+      - .:/workspace
+      - ~/.ssh:/home/rdk/.ssh:ro
+      - ~/.gitconfig:/home/rdk/.gitconfig:ro
+      - ~/.netrc:/home/rdk/.netrc:ro
+    environment:
+      - LANG=en_US.UTF-8
+      - LC_ALL=en_US.UTF-8
+      - LANGUAGE=en_US.UTF-8
+      - MACHINE=${MACHINE:-raspberrypi4-64-rdk-android-hybrid}
+      - DISTRO=${DISTRO:-rdk-generic-hybrid}
+    command: shell
+    stdin_open: true
+    tty: true
+    profiles:
+      - shell 
