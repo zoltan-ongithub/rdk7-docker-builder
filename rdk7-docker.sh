@@ -56,13 +56,15 @@ Commands:
     create_container  Build the Docker image with user mapping
     setup             Run generate-rdk-build-env and configure RDK target (outside container)
     run               Run the RDK build process (inside container)
+    run dependency    Generate dependency graph instead of building (inside container)
     shell             Drop into a shell in the container
     help              Show this help
 
 Examples:
     $0 create_container
-    $0 setup    # Configure RDK environment
-    $0 run      # Run build process
+    $0 setup              # Configure RDK environment
+    $0 run                # Run build process
+    $0 run dependency     # Generate dependency graph
 
 EOF
 }
@@ -83,11 +85,18 @@ create_container() {
 }
 
 
+# function: setup()
+# arg 1: layer to be configured
+# If no argument is supplied the user is asked to select one of the valid layers
 setup() {
     print_info "Running RDK-7 setup (outside container)..."
     
-    get_input "Enter layer to build (oss/vendor/middleware/application/image-assembler)" "$DEFAULT_LAYER" "LAYER"
-
+    if [ -z "$1" ]
+      then
+         get_input "Enter layer to build (oss/vendor/middleware/application/image-assembler)" "$DEFAULT_LAYER" "LAYER"
+      else
+         LAYER=$1
+     fi
     ./generate-rdk-build-env --layer $LAYER > build.env
 }
 
@@ -115,6 +124,32 @@ run() {
         -e USER_ID="$user_id" \
         -e GROUP_ID="$group_id" \
         "$IMAGE_NAME" build
+}
+
+run_dependency() {
+    print_info "Running RDK-7 dependency graph generation (inside container)..."
+    
+    # Check if build.env exists
+    if [ ! -f "build.env" ]; then
+        print_error "build.env not found. Please run '$0 setup' first"
+        exit 1
+    fi
+    
+    local user_id=$(id -u)
+    local group_id=$(id -g)
+    local workspace="$(pwd)"
+    
+    docker run --rm \
+        --name "$CONTAINER_NAME" \
+        --user "$user_id:$group_id" \
+        -v "$workspace:/workspace" \
+        -v "$HOME/.ssh:/home/rdk/.ssh:ro" \
+        -v "$HOME/.gitconfig:/home/rdk/.gitconfig:ro" \
+        -v "$HOME/.netrc:/home/rdk/.netrc:ro" \
+        -v "$HOME/community_shared:/home/rdk/community_shared" \
+        -e USER_ID="$user_id" \
+        -e GROUP_ID="$group_id" \
+        "$IMAGE_NAME" dependency
 }
 
 shell() {
@@ -149,10 +184,14 @@ case "${1:-help}" in
         create_container
         ;;
     setup)
-        setup
+        setup $2
         ;;
     run)
-        run
+        if [ "$2" = "dependency" ]; then
+            run_dependency
+        else
+            run
+        fi
         ;;
     shell)
         shell

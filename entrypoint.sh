@@ -190,6 +190,61 @@ create_ipk_feed() {
     fi
 }
 
+generate_dependency_graph() {
+    local layer_name=$1
+    local layer_prefix=${1//-/_}
+    layer_prefix=${layer_prefix^^}
+
+    local package_name="lib32-packagegroup-${layer_name}-layer"
+    
+    # Handle special cases
+    case "$layer_name" in
+        "image-assembler")
+            local package_name="lib32-rdk-fullstack-image"
+            ;;
+    esac
+    
+    print_info "Generating dependency graph for $layer_name layer..."
+    
+    # Setup directory and environment
+    local layer_dir="/workspace/${layer_name}-layer"
+    cd "$layer_dir"
+    
+    print_info "Setting up $layer_name build environment..."
+    MACHINE="$MACHINE" source ./scripts/setup-environment $BUILD_DIR
+    
+    print_info "Generating dependency graph for $package_name..."
+    bitbake -g "$package_name"
+    
+    print_info "Creating reduced depdency graph"
+    oe-depends-dot -r task-depends.dot
+    print_info "Creadting package layer list: package-layers.txt"
+    bitbake-layers show-recipes > package-layers.txt
+
+    print_success "Dependency graph generation completed for layer: $layer_name"
+}
+
+run_dependency() {
+    [ ! -f /workspace/build.env ] && {
+        print_error "No build.env found. Please run setup first"
+        exit 1
+    }
+    
+    print_info "Sourcing build environment..."
+    source /workspace/build.env
+    print_info "Generating dependency graph for layer: $LAYER"
+    
+    case "$LAYER" in
+        "oss"|"vendor"|"middleware"|"application"|"image-assembler")
+            generate_dependency_graph "$LAYER"
+            ;;
+        *)
+            print_error "Unsupported layer: $LAYER"
+            exit 1
+            ;;
+    esac
+}
+
 run_build() {
     [ ! -f /workspace/build.env ] && {
         print_error "No build.env found. Please run setup first"
@@ -222,6 +277,7 @@ main() {
         print_info "Running in unsupervised mode"
         case "$1" in
             "build") run_build ;;
+            "dependency") run_dependency ;;
             "shell") exec /bin/bash ;;
             *) print_info "Executing command: $@"; exec "$@" ;;
         esac
