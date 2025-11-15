@@ -21,6 +21,19 @@ export ${env_prefix[layer_name]}_IPK_PATH="${build['shared-dir']}/${build['machi
 % endif
 % endfor
 
+# Repository configuration
+export REPO_TYPE="${repository['type']}"
+export REPO_BASE_URL="${repository['base-url']}"
+
+# IPK server URLs (remote paths matching local structure)
+% for layer_name, layer in layers.items():
+% if layer_name == 'oss':
+export ${env_prefix[layer_name]}_IPK_SERVER_URL="${repository['base-url']}/${build['machine']['arch']}-${layer_name}/${build['branch']['oss']}/ipk"
+% elif layer_name != 'image-assembler':
+export ${env_prefix[layer_name]}_IPK_SERVER_URL="${repository['base-url']}/${build['machine']['model']}-${layer_name}/${build['branch']['manifest']}/ipk"
+% endif
+% endfor
+
 # Build setup (uses container paths)
 % if target_layer == 'oss':
 export MACHINE="${build['machine']['arch']}"

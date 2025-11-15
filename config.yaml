@@ -15,6 +15,11 @@ build:
   shared-dir: "${HOME}/community_shared"
   workspace-dir: "/workspace"
 
+# Repository configuration
+repository:
+  base-url: "https://repo.solution57.com"
+  type: "remote"  # Options: "remote" or "local"
+
 # Layer-specific configurations
 layers:
   oss:

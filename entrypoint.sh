@@ -132,35 +132,51 @@ build_layer() {
 
 configure_ipk_feeds() {
     local layer=$1
+    
+    # Determine which paths to use based on REPO_TYPE
+    if [ "$REPO_TYPE" = "remote" ]; then
+        local oss_path="$OSS_IPK_SERVER_URL"
+        local vendor_path="$VENDOR_IPK_SERVER_URL"
+        local middleware_path="$MIDDLEWARE_IPK_SERVER_URL"
+        local application_path="$APPLICATION_IPK_SERVER_URL"
+        print_info "Configuring IPK feeds for remote repository: $REPO_BASE_URL"
+    else
+        local oss_path="file:/$OSS_IPK_PATH"
+        local vendor_path="file:/$VENDOR_IPK_PATH"
+        local middleware_path="file:/$MIDDLEWARE_IPK_PATH"
+        local application_path="file:/$APPLICATION_IPK_PATH"
+        print_info "Configuring IPK feeds for local repository"
+    fi
+    
     case "$layer" in
         "oss") 
             ;;  # No dependencies
         "vendor")
-            sed -i "s|OSS_IPK_SERVER_PATH = \".*\"|OSS_IPK_SERVER_PATH = \"file:/$OSS_IPK_PATH\"|" \
+            sed -i "s|OSS_IPK_SERVER_PATH = \".*\"|OSS_IPK_SERVER_PATH = \"$oss_path\"|" \
                 rdke/common/meta-oss-reference-release/conf/machine/include/oss.inc
             ;;
         "middleware")
-            sed -i "s|OSS_IPK_SERVER_PATH = \".*\"|OSS_IPK_SERVER_PATH = \"file:/$OSS_IPK_PATH\"|" \
+            sed -i "s|OSS_IPK_SERVER_PATH = \".*\"|OSS_IPK_SERVER_PATH = \"$oss_path\"|" \
                 rdke/common/meta-oss-reference-release/conf/machine/include/oss.inc
-            sed -i "s|VENDOR_IPK_SERVER_PATH = \".*\"|VENDOR_IPK_SERVER_PATH = \"file:/$VENDOR_IPK_PATH\"|" \
+            sed -i "s|VENDOR_IPK_SERVER_PATH = \".*\"|VENDOR_IPK_SERVER_PATH = \"$vendor_path\"|" \
                 rdke/vendor/meta-vendor-release/conf/machine/include/vendor.inc
             ;;
         "application")
-            sed -i "s|OSS_IPK_SERVER_PATH = \".*\"|OSS_IPK_SERVER_PATH = \"file:/$OSS_IPK_PATH\"|" \
+            sed -i "s|OSS_IPK_SERVER_PATH = \".*\"|OSS_IPK_SERVER_PATH = \"$oss_path\"|" \
                 rdke/common/meta-oss-reference-release/conf/machine/include/oss.inc
-            sed -i "s|VENDOR_IPK_SERVER_PATH = \".*\"|VENDOR_IPK_SERVER_PATH = \"file:/$VENDOR_IPK_PATH\"|" \
+            sed -i "s|VENDOR_IPK_SERVER_PATH = \".*\"|VENDOR_IPK_SERVER_PATH = \"$vendor_path\"|" \
                 rdke/vendor/meta-vendor-release/conf/machine/include/vendor.inc
-            sed -i "s|MW_IPK_SERVER_PATH = \".*\"|MW_IPK_SERVER_PATH = \"file:/$MIDDLEWARE_IPK_PATH\"|" \
+            sed -i "s|MW_IPK_SERVER_PATH = \".*\"|MW_IPK_SERVER_PATH = \"$middleware_path\"|" \
                 rdke/middleware/meta-middleware-release/conf/machine/include/middleware.inc
             ;;
         "image-assembler")
-            sed -i "s|OSS_IPK_SERVER_PATH = \".*\"|OSS_IPK_SERVER_PATH = \"file:/$OSS_IPK_PATH\"|" \
+            sed -i "s|OSS_IPK_SERVER_PATH = \".*\"|OSS_IPK_SERVER_PATH = \"$oss_path\"|" \
                 rdke/common/meta-oss-reference-release/conf/machine/include/oss.inc
-            sed -i "s|VENDOR_IPK_SERVER_PATH = \".*\"|VENDOR_IPK_SERVER_PATH = \"file:/$VENDOR_IPK_PATH\"|" \
+            sed -i "s|VENDOR_IPK_SERVER_PATH = \".*\"|VENDOR_IPK_SERVER_PATH = \"$vendor_path\"|" \
                 rdke/vendor/meta-vendor-release/conf/machine/include/vendor.inc
-            sed -i "s|MW_IPK_SERVER_PATH = \".*\"|MW_IPK_SERVER_PATH = \"file:/$MIDDLEWARE_IPK_PATH\"|" \
+            sed -i "s|MW_IPK_SERVER_PATH = \".*\"|MW_IPK_SERVER_PATH = \"$middleware_path\"|" \
                 rdke/middleware/meta-middleware-release/conf/machine/include/middleware.inc
-            sed -i "s|APPLICATION_IPK_SERVER_PATH = \".*\"|APPLICATION_IPK_SERVER_PATH = \"file:/$APPLICATION_IPK_PATH\"|" \
+            sed -i "s|APPLICATION_IPK_SERVER_PATH = \".*\"|APPLICATION_IPK_SERVER_PATH = \"$application_path\"|" \
                 rdke/application/meta-application-release/conf/machine/include/application.inc
             ;;
     esac

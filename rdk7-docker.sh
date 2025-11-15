@@ -97,7 +97,24 @@ setup() {
       else
          LAYER=$1
      fi
+    
+    # Ask for repository type
+    print_info "Repository configuration:"
+    print_info "1) Remote repository (repo.solution57.com)"
+    print_info "2) Local repository"
+    get_input "Select repository type (1/2)" "1" "REPO_CHOICE"
+    
+    # Generate build.env
     ./generate-rdk-build-env --layer $LAYER > build.env
+    
+    # Override repo type if user selected local
+    if [ "$REPO_CHOICE" = "2" ]; then
+        print_info "Configuring for local repository..."
+        # Override the REPO_TYPE in build.env
+        sed -i 's/export REPO_TYPE="remote"/export REPO_TYPE="local"/' build.env
+    else
+        print_info "Configuring for remote repository (repo.solution57.com)..."
+    fi
 }
 
 run() {
