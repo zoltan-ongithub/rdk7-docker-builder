@@ -31,6 +31,20 @@ properties:
         type: string
         minlength: 1
 
+  repository:
+    type: object
+    required:
+      - "base-url"
+      - "type"
+    additionalproperties: false
+    properties:
+      base-url:
+        type: string
+        minlength: 1
+      type:
+        type: string
+        enum: ["remote", "local"]
+
   layers:
     type: object
     required:
@@ -54,6 +68,7 @@ properties:
 
 required:
   - "build"
+  - "repository"
   - "layers"
 
 additionalproperties: false
@@ -84,6 +99,10 @@ definitions:
         type: string
         description: "url of the manifest file for this layer"
         minlength: 1
+      repository-type:
+        type: string
+        description: "repository type for this layer (local or remote)"
+        enum: ["local", "remote"]
     required:
       - "build-command"
       - "manifest"

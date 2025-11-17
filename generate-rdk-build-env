@@ -120,6 +120,22 @@ def load_config(config_path: Path, schema_path: Path) -> "dict[str, Any]":
         raise RDKSetupError(f"Failed to load configuration: {error}") from error
 
 
+def parse_layer_repos(layer_repos_str: str) -> "dict[str, str]":
+    """Parse layer repository types from CLI argument."""
+    layer_repos = {}
+    if layer_repos_str:
+        for item in layer_repos_str.split(','):
+            if ':' in item:
+                layer, repo_type = item.split(':', 1)
+                layer = layer.strip()
+                repo_type = repo_type.strip()
+                if layer in ENV_PREFIX and repo_type in ['local', 'remote']:
+                    layer_repos[layer] = repo_type
+                else:
+                    Log.warning(f"Invalid layer-repo specification: {item}")
+    return layer_repos
+
+
 def create_argument_parser() -> argparse.ArgumentParser:
     """Create and configure argument parser."""
     parser = argparse.ArgumentParser(
@@ -150,6 +166,13 @@ Dependencies:
     )
 
     parser.add_argument(
+        "--layer-repos",
+        "-R",
+        help="Set repository type for each layer (format: oss:remote,vendor:local,...)",
+        default="",
+    )
+
+    parser.add_argument(
         "--schema",
         default="etc/config-schema.yaml",
         help="Path to YAML schema for the config file (default: etc/config-schema.yaml)",
@@ -177,6 +200,21 @@ def main() -> None:
         Log.info(f"Generating build environment for {args.layer}")
         config = load_config(Path(args.config), Path(args.schema))
         Log.success(f"Configuration loaded from {args.config}")
+
+        # Parse layer repository types
+        layer_repos = parse_layer_repos(args.layer_repos)
+        
+        # Apply layer-specific repository settings to config
+        for layer_name in ENV_PREFIX:
+            if layer_name in layer_repos:
+                if layer_name not in config['layers']:
+                    config['layers'][layer_name] = {}
+                config['layers'][layer_name]['repository-type'] = layer_repos[layer_name]
+                Log.info(f"Setting {layer_name} repository type to: {layer_repos[layer_name]}")
+            else:
+                # Set default if not specified
+                if 'repository-type' not in config['layers'][layer_name]:
+                    config['layers'][layer_name]['repository-type'] = config['repository']['type']
 
         # Create shared directory
         # This must be done before the container is ever started

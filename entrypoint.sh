@@ -133,20 +133,34 @@ build_layer() {
 configure_ipk_feeds() {
     local layer=$1
     
-    # Determine which paths to use based on REPO_TYPE
-    if [ "$REPO_TYPE" = "remote" ]; then
-        local oss_path="$OSS_IPK_SERVER_URL"
-        local vendor_path="$VENDOR_IPK_SERVER_URL"
-        local middleware_path="$MIDDLEWARE_IPK_SERVER_URL"
-        local application_path="$APPLICATION_IPK_SERVER_URL"
-        print_info "Configuring IPK feeds for remote repository: $REPO_BASE_URL"
+    # Determine which paths to use based on per-layer REPO_TYPE
+    local oss_path vendor_path middleware_path application_path
+    
+    if [ "$OSS_REPO_TYPE" = "remote" ]; then
+        oss_path="$OSS_IPK_SERVER_URL"
     else
-        local oss_path="file:/$OSS_IPK_PATH"
-        local vendor_path="file:/$VENDOR_IPK_PATH"
-        local middleware_path="file:/$MIDDLEWARE_IPK_PATH"
-        local application_path="file:/$APPLICATION_IPK_PATH"
-        print_info "Configuring IPK feeds for local repository"
+        oss_path="file:/$OSS_IPK_PATH"
     fi
+    
+    if [ "$VENDOR_REPO_TYPE" = "remote" ]; then
+        vendor_path="$VENDOR_IPK_SERVER_URL"
+    else
+        vendor_path="file:/$VENDOR_IPK_PATH"
+    fi
+    
+    if [ "$MIDDLEWARE_REPO_TYPE" = "remote" ]; then
+        middleware_path="$MIDDLEWARE_IPK_SERVER_URL"
+    else
+        middleware_path="file:/$MIDDLEWARE_IPK_PATH"
+    fi
+    
+    if [ "$APPLICATION_REPO_TYPE" = "remote" ]; then
+        application_path="$APPLICATION_IPK_SERVER_URL"
+    else
+        application_path="file:/$APPLICATION_IPK_PATH"
+    fi
+    
+    print_info "Configuring IPK feeds (OSS:$OSS_REPO_TYPE, Vendor:$VENDOR_REPO_TYPE, MW:$MIDDLEWARE_REPO_TYPE, App:$APPLICATION_REPO_TYPE)"
     
     case "$layer" in
         "oss") 

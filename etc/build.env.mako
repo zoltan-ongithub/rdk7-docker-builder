@@ -25,6 +25,14 @@ export ${env_prefix[layer_name]}_IPK_PATH="${build['shared-dir']}/${build['machi
 export REPO_TYPE="${repository['type']}"
 export REPO_BASE_URL="${repository['base-url']}"
 
+# Layer-specific repository types
+% for layer_name, layer in layers.items():
+% if layer_name != 'image-assembler':
+<% repo_type = layer.get('repository-type', repository['type']) %>
+export ${env_prefix[layer_name]}_REPO_TYPE="${repo_type}"
+% endif
+% endfor
+
 # IPK server URLs (remote paths matching local structure)
 % for layer_name, layer in layers.items():
 % if layer_name == 'oss':
@@ -63,3 +71,10 @@ echo "Work directory: $WORK_DIR"
 echo "Build directory: $BUILDDIR"
 echo "Machine: $MACHINE"
 echo "Build command: $BUILD_COMMAND"
+echo ""
+echo "Repository configuration:"
+% for layer_name in ['oss', 'vendor', 'middleware', 'application']:
+% if layer_name in layers:
+echo "  ${layer_name}: $(eval echo \$${env_prefix[layer_name]}_REPO_TYPE)"
+% endif
+% endfor
